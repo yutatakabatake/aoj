@@ -7,6 +7,17 @@ type dice = {
   face6 : int;
 }
 
+let init_dice nums =
+  let numbers = nums |> String.split_on_char ' ' |> List.map int_of_string in
+  {
+    face1 = List.nth numbers 0;
+    face2 = List.nth numbers 1;
+    face3 = List.nth numbers 2;
+    face4 = List.nth numbers 3;
+    face5 = List.nth numbers 4;
+    face6 = List.nth numbers 5;
+  }
+
 let pp_dice { face1; face2; face3; face4; face5; face6 } =
   print_endline
     ("face1= " ^ string_of_int face1 ^ "\nface2= " ^ string_of_int face2
@@ -53,70 +64,63 @@ let roll dice direction =
       }
   | _ -> dice
 
-let rec turn_right dice n =
-  if n == 0 then dice
-  else
-    let new_dice =
-      {
-        face1 = dice.face1;
-        face2 = dice.face3;
-        face3 = dice.face5;
-        face4 = dice.face2;
-        face5 = dice.face4;
-        face6 = dice.face6;
-      }
-    in
-    turn_right new_dice (n - 1)
-
-let init_dice nums =
-  let numbers = nums |> String.split_on_char ' ' |> List.map int_of_string in
+let rec turn_right dice =
   {
-    face1 = List.nth numbers 0;
-    face2 = List.nth numbers 1;
-    face3 = List.nth numbers 2;
-    face4 = List.nth numbers 3;
-    face5 = List.nth numbers 4;
-    face6 = List.nth numbers 5;
+    face1 = dice.face1;
+    face2 = dice.face3;
+    face3 = dice.face5;
+    face4 = dice.face2;
+    face5 = dice.face4;
+    face6 = dice.face6;
   }
 
-let find_top top dice =
-  match dice with
-  | { face1; _ } when face1 == top -> dice
-  | { face1; face2; _ } when face2 == top -> roll dice 'N'
-  | { face1; face2; face3; _ } when face3 == top -> roll dice 'W'
-  | { face1; face2; face3; face4; _ } when face4 == top -> roll dice 'E'
-  | { face1; face2; face3; face4; face5; _ } when face5 == top -> roll dice 'S'
-  | { face1; face2; face3; face4; face5; face6 } when face6 == top ->
-      roll (roll dice 'N') 'N'
-  | _ -> dice
+let eq dice1 dice2 =
+  dice1.face1 == dice2.face1 && dice1.face2 == dice2.face2
+  && dice1.face3 == dice2.face3 && dice1.face4 == dice2.face4
+  && dice1.face5 == dice2.face5 && dice1.face6 == dice2.face6
 
-let find_front front dice =
-  match dice with
-  | { face1; face2; _ } when face2 == front -> dice
-  | { face1; face2; face3; _ } when face3 == front -> turn_right dice 1
-  | { face1; face2; face3; face4; _ } when face4 == front -> turn_right dice 3
-  | { face1; face2; face3; face4; face5; _ } when face5 == front ->
-      turn_right dice 2
-  | _ -> dice
+let rec judge_side dice1 dice2 n =
+  if n == 0 then false
+  else if eq dice1 dice2 then true
+  else
+    let new_dice = turn_right dice1 in
+    judge_side new_dice dice2 (n - 1)
 
-let make_roll dice top front =
-  let top_dice = find_top top dice in
-  find_front front top_dice
+let rec judge_top dice1 dice2 n =
+  match n with
+  | 1 ->
+      let new_dice = roll dice1 'E' in
+      let res = judge_side new_dice dice2 4 in
+      if res then res else judge_top dice1 dice2 (n - 1)
+  | 2 ->
+      let new_dice = roll dice1 'W' in
+      let res = judge_side new_dice dice2 4 in
+      if res then res else judge_top dice1 dice2 (n - 1)
+  | 3 ->
+      let new_dice = roll (roll (roll dice1 'N') 'N') 'N' in
+      let res = judge_side new_dice dice2 4 in
+      if res then res else judge_top dice1 dice2 (n - 1)
+  | 4 ->
+      let new_dice = roll (roll dice1 'N') 'N' in
+      let res = judge_side new_dice dice2 4 in
+      if res then res else judge_top dice1 dice2 (n - 1)
+  | 5 ->
+      let new_dice = roll dice1 'N' in
+      let res = judge_side new_dice dice2 4 in
+      if res then res else judge_top dice1 dice2 (n - 1)
+  | 6 ->
+      let res = judge_side dice1 dice2 4 in
+      if res then res else judge_top dice1 dice2 (n - 1)
+  | _ -> false
 
-let isEq dice1 dice2 =
-  let top = dice1.face1 in
-  let front = dice1.face2 in
-  let new_dice2 = make_roll dice2 top front in
-  dice1.face3 == new_dice2.face3
-  && dice1.face4 == new_dice2.face4
-  && dice1.face5 == new_dice2.face5
-  && dice1.face6 == new_dice2.face6
+let judge_same_dice dice1 dice2 = judge_top dice1 dice2 6
 
 let main () =
   let input_num1 = read_line () in
   let input_num2 = read_line () in
   let dice1 = init_dice input_num1 in
   let dice2 = init_dice input_num2 in
-  if isEq dice1 dice2 then print_endline "Yes" else print_endline "No"
+  let res = judge_same_dice dice1 dice2 in
+  if res then print_endline "Yes" else print_endline "No"
 
 let _ = main ()
