@@ -10,53 +10,52 @@ class Node {
 
 class DoubleLinkedList {
     constructor() {
-        this.sentinel = new Node();
-        this.sentinel.next = this.sentinel;
-        this.sentinel.prev = this.sentinel;
+        this.head = new Node(null);
+        this.tail = new Node(null);
+        this.head.next = this.tail;
+        this.tail.prev = this.head;
     }
 
     insert(key) {
         const node = new Node(key);
-        node.next = this.sentinel.next;
-        this.sentinel.next.prev = node;
-        this.sentinel.next = node;
-        node.prev = this.sentinel;
+        node.next = this.head.next;
+        this.head.next.prev = node;
+        this.head.next = node;
+        node.prev = this.head;
     }
 
     delete(key) {
-        let currentNode = this.sentinel.next;
-        while (currentNode.key != key) {
+        let currentNode = this.head.next;
+        while (currentNode.key != key && currentNode != this.tail) {
             currentNode = currentNode.next;
         }
-        if (currentNode.next == + null) {
-            currentNode.prev.next = null;
-        } else {
+        if (currentNode != this.tail) {
             currentNode.prev.next = currentNode.next;
             currentNode.next.prev = currentNode.prev;
         }
     }
 
     deleteFirst() {
-        this.sentinel.next = this.sentinel.next.next;
-        this.sentinel.next.prev = this.sentinel;
+        this.head.next = this.head.next.next;
+        this.head.next.prev = this.head;
     }
 
     deleteLast() {
-        let currentNode = this.sentinel.next;
-        while (currentNode.next != + null) {
+        let currentNode = this.head.next;
+        while (currentNode.next != this.tail) {
             currentNode = currentNode.next;
         }
-        currentNode.prev.next = null;
+        currentNode.prev.next = currentNode.next;
     }
 
     print() {
-        let currentNode = this.sentinel.next;
-        let str = '';
+        let currentNode = this.head.next;
+        let res = [];
         while (currentNode.next !== null) {
-            str = str + ' ' + currentNode.key;
+            res.push(currentNode.key);
             currentNode = currentNode.next;
-        };
-        console.log(str);
+        }
+        console.log(res.join(' '));
     }
 }
 
